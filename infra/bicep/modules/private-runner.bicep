@@ -38,7 +38,7 @@ runcmd:
   - curl -sSLo /tmp/packages-microsoft-prod.deb https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb
   - dpkg -i /tmp/packages-microsoft-prod.deb
   - apt-get update
-  - DEBIAN_FRONTEND=noninteractive apt-get install -y powershell
+  - DEBIAN_FRONTEND=noninteractive apt-get install -y dotnet-sdk-8.0 powershell
   - rm -f /tmp/packages-microsoft-prod.deb
 '''
 

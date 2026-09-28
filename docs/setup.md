@@ -58,6 +58,8 @@ az deployment sub create --location westus3 --template-file infra/bicep/runner.b
 Create a repository self-hosted runner registration token in GitHub, configure
 the VM runner with labels `self-hosted`, `linux`, `x64`, and
 `azure-sql-private`, and install it as a service under a non-root account.
+The runner template preinstalls PowerShell and the .NET 8 SDK required by the
+deployment scripts.
 Registration tokens are short-lived credentials: pass one only at execution
 time, never write it to source, parameters, cloud-init, or logs. Verify that
 all SQL hostnames resolve to private addresses and TCP 1433 is reachable before
