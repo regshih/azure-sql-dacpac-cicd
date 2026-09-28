@@ -9,7 +9,11 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 if (-not (Test-Path $Dacpac)) { throw "DACPAC not found: $Dacpac" }
-$sqlPackage = (Get-Command SqlPackage -ErrorAction Stop).Source
+$sqlPackageCommand = Get-Command SqlPackage -ErrorAction SilentlyContinue
+if (-not $sqlPackageCommand) {
+    $sqlPackageCommand = Get-Command sqlpackage -ErrorAction Stop
+}
+$sqlPackage = $sqlPackageCommand.Source
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $connection = "Server=tcp:$ServerName.database.windows.net,1433;Initial Catalog=$DatabaseName;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
 $common = @("/SourceFile:$Dacpac", "/TargetConnectionString:$connection", "/AccessToken:$AccessToken",
