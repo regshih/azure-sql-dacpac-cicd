@@ -24,7 +24,7 @@ param firewallManagerEnabled bool
 @description('Resource ID of the custom firewall manager role definition.')
 param firewallManagerRoleDefinitionId string
 
-resource server 'Microsoft.Sql/servers@2023-08-01-preview' = {
+resource server 'Microsoft.Sql/servers@2023-08-01' = {
   name: sqlServerName
   location: location
   properties: {
@@ -38,7 +38,7 @@ resource server 'Microsoft.Sql/servers@2023-08-01-preview' = {
     }
     minimalTlsVersion: '1.2'
     publicNetworkAccess: publicNetworkAccess
-    restrictOutboundNetworkAccess: 'Enabled'
+    restrictOutboundNetworkAccess: publicNetworkAccess == 'Disabled' ? 'Enabled' : 'Disabled'
     version: '12.0'
   }
   tags: {
@@ -48,7 +48,7 @@ resource server 'Microsoft.Sql/servers@2023-08-01-preview' = {
   }
 }
 
-resource database 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
+resource database 'Microsoft.Sql/servers/databases@2023-08-01' = {
   parent: server
   name: databaseName
   location: location

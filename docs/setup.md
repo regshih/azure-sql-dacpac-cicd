@@ -21,6 +21,15 @@ Exact subjects:
 * `repo:YOUR_ORG/YOUR_REPO:environment:test`
 * `repo:YOUR_ORG/YOUR_REPO:environment:prod`
 
+Organizations can customize GitHub OIDC claims to use immutable owner and
+repository IDs. In that case, create the credential with the exact subject
+reported by `azure/login`, for example:
+
+`repo:YOUR_ORG@OWNER_ID/YOUR_REPO@REPOSITORY_ID:environment:dev`
+
+Use `gh api users/YOUR_ORG --jq .id` and
+`gh api repos/YOUR_ORG/YOUR_REPO --jq .id` to retrieve those IDs.
+
 Do not create client secrets. Record the application (client), tenant, subscription, and service-principal object IDs as non-secret identifiers.
 
 ## 2. Provision infrastructure manually
