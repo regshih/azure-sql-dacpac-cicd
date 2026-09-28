@@ -1,6 +1,6 @@
 # Azure SQL DACPAC CI/CD proof of concept
 
-Enterprise-oriented reference repository for building, validating, and promoting a SQL project to Azure SQL Database without passwords or permanent firewall rules. It contains equivalent Bicep and Terraform implementations; **nothing in this repository deploys infrastructure automatically**.
+Enterprise-oriented reference repository for building, validating, and promoting a SQL project to Azure SQL Database without passwords or public database access. It contains equivalent Bicep and Terraform implementations; **nothing in this repository deploys infrastructure automatically**.
 
 ## Architecture
 
@@ -13,14 +13,15 @@ flowchart LR
   DISPATCH[Manual dispatch] --> PROD[GitHub environment: prod]
   DEV & TEST & PROD --> OIDC[GitHub OIDC]
   OIDC --> ARM[Azure Resource Manager]
-  DEV & TEST & PROD --> FW[Temporary runner /32 firewall rule]
-  FW --> SQL[(Azure SQL Database)]
+  DEV & TEST & PROD --> RUNNER[Private self-hosted runner]
+  RUNNER --> DNS[Private DNS]
+  DNS --> PE[SQL private endpoints]
+  PE --> SQL[(Azure SQL Database)]
   DEV & TEST & PROD --> PKG[SqlPackage + Entra access token]
   PKG --> SQL
-  FW --> CLEAN[Always remove rule]
 ```
 
-Private mode replaces the temporary public path with a private endpoint, private DNS, and a network-connected self-hosted runner.
+The included runner template uses NAT for outbound GitHub access and has no public IP or inbound NSG rules.
 
 ## Repository map
 
@@ -52,13 +53,13 @@ Replace every `YOUR_*`, all-zero GUID, and `replace1234` placeholder before use.
 * After setup sets the repository variable `AZURE_CONFIGURED=true`, a push to `main` deploys dev automatically. Unconfigured forks safely skip deployment.
 * A successful dev workflow triggers test, whose GitHub Environment can require approval.
 * Production is manual and protected by the `prod` Environment.
-* Every deployment rebuilds the selected commit, generates a report and SQL script, publishes with an Entra token, uploads evidence even on failure, and removes its uniquely named firewall rule in an `always()` step.
+* Every deployment runs on the labeled private runner, rebuilds the selected commit, generates a report and SQL script, publishes with an Entra token, and uploads evidence even on failure.
 
 > Screenshot placeholder: GitHub Environments protection rules (`docs/images/github-environments.png`)
 >
 > Screenshot placeholder: successful dev → test workflow promotion (`docs/images/workflow-promotion.png`)
 >
-> Screenshot placeholder: Azure SQL networking blade with no permanent firewall rules (`docs/images/sql-networking.png`)
+> Screenshot placeholder: Azure SQL networking blade with public access disabled (`docs/images/sql-networking.png`)
 
 ## Safety
 

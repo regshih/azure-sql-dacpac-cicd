@@ -34,7 +34,7 @@ Do not create client secrets. Record the application (client), tenant, subscript
 
 ## 2. Provision infrastructure manually
 
-The user request approves generation, not deployment. Review `docs/plan.md` and `.azure/infrastructure-plan.json`, replace placeholders, run a what-if/plan, then apply **either** Bicep or Terraform.
+Review `docs/plan.md` and `.azure/infrastructure-plan.json`, replace placeholders, run a what-if/plan, then apply **either** Bicep or Terraform.
 
 ```bash
 az deployment sub what-if --location eastus2 --template-file infra/bicep/main.bicep --parameters infra/bicep/environments/dev.bicepparam
@@ -44,9 +44,27 @@ terraform -chdir=infra/terraform plan -var-file=environments/dev.tfvars
 
 The Entra administrator object ID/name in the parameters should be that environment's OIDC service principal. Use a separately controlled provisioning identity; do not grant infrastructure Contributor to the deployment identity.
 
-## 3. Grant management-plane access
+## 3. Provision and register the private runner
 
-Create a custom role from [security.md](security.md) and assign it at the logical server scope. It permits only server discovery and temporary firewall-rule management. If private mode is enabled, omit firewall permissions; the deployment identity needs no ARM write permission.
+Deploy each SQL environment with private networking enabled, then populate
+`infra/bicep/environments/runner.bicepparam` with the three SQL server resource
+IDs and an SSH public key:
+
+```bash
+az deployment sub what-if --location westus3 --template-file infra/bicep/runner.bicep --parameters infra/bicep/environments/runner.bicepparam
+az deployment sub create --location westus3 --template-file infra/bicep/runner.bicep --parameters infra/bicep/environments/runner.bicepparam
+```
+
+Create a repository self-hosted runner registration token in GitHub, configure
+the VM runner with labels `self-hosted`, `linux`, `x64`, and
+`azure-sql-private`, and install it as a service under a non-root account.
+Registration tokens are short-lived credentials: pass one only at execution
+time, never write it to source, parameters, cloud-init, or logs. Verify that
+all SQL hostnames resolve to private addresses and TCP 1433 is reachable before
+enabling deployments.
+
+The deployment identity needs SQL data-plane authorization but no ARM write
+permission in private mode.
 
 ## 4. Bootstrap SQL authorization
 
