@@ -1,0 +1,63 @@
+name: Deploy dev
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: sql-deploy-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment: dev
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-dotnet@v4 # Dependabot tracks major tag
+        with:
+          dotnet-version: 8.0.x
+      - uses: azure/login@v2 # Dependabot tracks major tag
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Build DACPAC
+        shell: pwsh
+        run: ./scripts/Build-Dacpac.ps1
+      - name: Install SqlPackage
+        run: dotnet tool install --global microsoft.sqlpackage
+      - name: Add temporary runner firewall rule
+        id: firewall
+        shell: pwsh
+        run: |
+          $ip = (Invoke-RestMethod -Uri 'https://api.ipify.org').Trim()
+          $rule = "gh-${{ github.run_id }}-${{ github.run_attempt }}"
+          "rule=$rule" >> $env:GITHUB_OUTPUT
+          az sql server firewall-rule create --resource-group '${{ vars.AZURE_RESOURCE_GROUP }}' --server '${{ vars.AZURE_SQL_SERVER }}' --name $rule --start-ip-address $ip --end-ip-address $ip --output none
+      - name: Publish DACPAC
+        shell: pwsh
+        run: |
+          $token = az account get-access-token --resource https://database.windows.net/ --query accessToken -o tsv
+          ./scripts/Deploy-Dacpac.ps1 -Dacpac (Get-ChildItem artifacts/dacpac/*.dacpac).FullName -ServerName '${{ vars.AZURE_SQL_SERVER }}' -DatabaseName '${{ vars.AZURE_SQL_DATABASE }}' -AccessToken $token
+      - name: Remove temporary runner firewall rule
+        if: always() && steps.firewall.outputs.rule != ''
+        shell: pwsh
+        run: |
+          az sql server firewall-rule delete --resource-group '${{ vars.AZURE_RESOURCE_GROUP }}' --server '${{ vars.AZURE_SQL_SERVER }}' --name '${{ steps.firewall.outputs.rule }}' --yes --output none
+          if ($LASTEXITCODE -ne 0) { Write-Warning 'Firewall cleanup failed; remove the gh-* rule immediately.' }
+      - name: Upload deployment evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: dev-deployment-${{ github.run_id }}
+          path: |
+            artifacts/dacpac/
+            artifacts/deployment/
+          if-no-files-found: warn
+          retention-days: 30

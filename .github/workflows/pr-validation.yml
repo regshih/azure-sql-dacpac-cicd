@@ -1,0 +1,37 @@
+name: PR validation
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-dotnet@v4 # Dependabot tracks major tag
+        with:
+          dotnet-version: 8.0.x
+      - name: Install SQL lint tooling
+        run: pipx install sqlfluff
+      - name: Lint SQL
+        shell: pwsh
+        run: ./scripts/Test-Sql.ps1
+      - name: Build DACPAC
+        shell: pwsh
+        run: ./scripts/Build-Dacpac.ps1
+      - name: Upload DACPAC
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: dacpac-${{ github.sha }}
+          path: artifacts/dacpac/*.dacpac
+          if-no-files-found: error
+          retention-days: 14

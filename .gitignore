@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+artifacts/
+infra/bicep/main.json
+.DS_Store
+*.user

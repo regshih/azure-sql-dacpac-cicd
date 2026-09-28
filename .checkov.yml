@@ -1,0 +1,23 @@
+compact: true
+quiet: true
+skip-check:
+  # Public SQL is an explicit POC mode and has only workflow-scoped /32 rules.
+  - CKV_AZURE_113
+  - CKV2_AZURE_45
+  # Basic POC SKU does not support zone redundancy; prod SKU is parameterized.
+  - CKV_AZURE_229
+  # Ledger is not a requirement for this conventional transactional schema.
+  - CKV_AZURE_224
+  # Defender, VA, audit storage, and contacts belong to the enterprise monitoring baseline.
+  - CKV_AZURE_23
+  - CKV_AZURE_24
+  - CKV_AZURE_25
+  - CKV_AZURE_26
+  - CKV_AZURE_27
+  - CKV2_AZURE_2
+  # Key Vault is optional and public only in public POC mode; it stores no pipeline credential.
+  - CKV_AZURE_109
+  - CKV_AZURE_189
+  - CKV2_AZURE_32
+  # Private endpoint subnets intentionally rely on platform PE policies, not an NSG.
+  - CKV2_AZURE_31
