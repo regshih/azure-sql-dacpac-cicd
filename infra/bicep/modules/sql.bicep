@@ -19,6 +19,10 @@ param publicNetworkAccess string
 param databaseSkuName string
 @description('Database SKU tier.')
 param databaseSkuTier string
+@description('Grant the deployment principal permission to manage temporary firewall rules.')
+param firewallManagerEnabled bool
+@description('Resource ID of the custom firewall manager role definition.')
+param firewallManagerRoleDefinitionId string
 
 resource server 'Microsoft.Sql/servers@2023-08-01-preview' = {
   name: sqlServerName
@@ -61,6 +65,16 @@ resource database 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
     environment: environment
     workload: 'sqldemo'
     'managed-by': 'bicep'
+  }
+}
+
+resource firewallManagerAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (firewallManagerEnabled) {
+  name: guid(server.id, entraAdminObjectId, firewallManagerRoleDefinitionId)
+  scope: server
+  properties: {
+    principalId: entraAdminObjectId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: firewallManagerRoleDefinitionId
   }
 }
 

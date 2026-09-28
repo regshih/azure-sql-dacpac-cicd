@@ -41,6 +41,31 @@ var sqlServerName = 'sql-sqldemo-${environment}-${uniqueSuffix}'
 var databaseName = 'sqldb-sqldemo-${environment}'
 var keyVaultName = 'kv-sqldemo-${environment}-${uniqueSuffix}'
 
+resource firewallManagerRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = if (!privateEndpointEnabled) {
+  name: guid(subscription().id, 'sqldemo-firewall-rule-manager')
+  properties: {
+    roleName: 'SqlDemo Firewall Rule Manager'
+    description: 'Allows CI/CD to create and remove temporary Azure SQL firewall rules.'
+    type: 'CustomRole'
+    permissions: [
+      {
+        actions: [
+          'Microsoft.Sql/servers/read'
+          'Microsoft.Sql/servers/firewallRules/read'
+          'Microsoft.Sql/servers/firewallRules/write'
+          'Microsoft.Sql/servers/firewallRules/delete'
+        ]
+        notActions: []
+        dataActions: []
+        notDataActions: []
+      }
+    ]
+    assignableScopes: [
+      subscription().id
+    ]
+  }
+}
+
 resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   name: resourceGroupName
   location: location
@@ -65,6 +90,8 @@ module sql 'modules/sql.bicep' = {
     publicNetworkAccess: privateEndpointEnabled ? 'Disabled' : 'Enabled'
     databaseSkuName: databaseSkuName
     databaseSkuTier: databaseSkuTier
+    firewallManagerEnabled: !privateEndpointEnabled
+    firewallManagerRoleDefinitionId: privateEndpointEnabled ? '' : firewallManagerRole.id
   }
 }
 
