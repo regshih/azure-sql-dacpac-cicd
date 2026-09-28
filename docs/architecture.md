@@ -2,15 +2,23 @@
 
 The DACPAC is the immutable database schema delivery unit. PR validation runs deterministic compilation and SQL linting. Deployment workflows rebuild the exact selected commit, authenticate to Azure with a short-lived GitHub OIDC token, obtain an Azure SQL access token, and call SqlPackage.
 
-## Network modes
+## Network architecture
 
-### Public endpoint (default POC)
+The deployment workflows target a self-hosted Linux runner labeled
+`azure-sql-private`. The included Bicep runner template creates a dedicated
+VNet, runner subnet, private-endpoint subnet, NAT Gateway, private DNS zone,
+and one private endpoint per SQL logical server. The VM has no public IP and
+the NSG has no inbound rules. NAT permits outbound access to GitHub and package
+registries.
 
-Azure SQL public network access is enabled, but IaC creates **no firewall rules**. Each deployment resolves the current GitHub-hosted runner's public address, creates a uniquely named `/32` rule, and deletes it in an `always()` cleanup step. Concurrent deployments are serialized per environment. A cancelled job can leave a rule behind; monitor and remove rules prefixed `gh-`.
+Azure SQL public network access is disabled. From the runner,
+`<server>.database.windows.net` resolves through
+`privatelink.database.windows.net` to a private address. SqlPackage connects
+over TCP 1433 using an Entra access token.
 
-### Private endpoint
-
-Setting `privateEndpointEnabled`/`private_endpoint_enabled` creates a VNet, dedicated subnet, SQL private endpoint, `privatelink.database.windows.net` zone, and VNet link, while disabling public access. GitHub-hosted runners cannot reach the endpoint. Change `runs-on` to approved self-hosted runner labels with VNet connectivity and verify private DNS before deployment.
+The environment IaC retains an optional public mode for adopters that cannot
+operate a private runner. Using it requires a deliberate workflow change and
+time-bound firewall controls; it is not the workflow default in this repository.
 
 ## Boundaries and availability
 

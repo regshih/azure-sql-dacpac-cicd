@@ -6,6 +6,7 @@
 *.tfplan
 artifacts/
 infra/bicep/main.json
+infra/bicep/runner.json
 .azure/deployment-plan.md
 .azure/validate-status.json
 .DS_Store

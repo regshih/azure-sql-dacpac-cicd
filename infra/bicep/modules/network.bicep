@@ -39,7 +39,7 @@ resource privateEndpointSubnet 'Microsoft.Network/virtualNetworks/subnets@2024-0
 }
 
 resource dns 'Microsoft.Network/privateDnsZones@2024-06-01' = {
-  name: 'privatelink.${az.environment().suffixes.sqlServerHostname}'
+  name: 'privatelink${az.environment().suffixes.sqlServerHostname}'
   location: 'global'
 }
 
