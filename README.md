@@ -49,7 +49,7 @@ Replace every `YOUR_*`, all-zero GUID, and `replace1234` placeholder before use.
 ## Promotion behavior
 
 * Pull requests lint and build but cannot request an Azure token.
-* A push to `main` deploys dev automatically.
+* After setup sets the repository variable `AZURE_CONFIGURED=true`, a push to `main` deploys dev automatically. Unconfigured forks safely skip deployment.
 * A successful dev workflow triggers test, whose GitHub Environment can require approval.
 * Production is manual and protected by the `prod` Environment.
 * Every deployment rebuilds the selected commit, generates a report and SQL script, publishes with an Entra token, uploads evidence even on failure, and removes its uniquely named firewall rule in an `always()` step.

@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: vars.AZURE_CONFIGURED == 'true'
     environment: dev
     runs-on: ubuntu-latest
     steps:

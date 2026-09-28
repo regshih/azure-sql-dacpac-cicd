@@ -18,6 +18,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: vars.AZURE_CONFIGURED == 'true'
     environment: prod
     runs-on: ubuntu-latest
     steps:

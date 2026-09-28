@@ -62,6 +62,10 @@ Create `dev`, `test`, and `prod`, then add these **environment variables** (not 
 * `AZURE_SQL_SERVER` (name only)
 * `AZURE_SQL_DATABASE`
 
+After all three environments are configured, create the repository variable
+`AZURE_CONFIGURED` with the value `true`. Deployment jobs remain safely skipped
+while this variable is absent or set to `false`.
+
 Restrict deployment branches to `main`. Require reviewers for test and prod; prevent self-review for prod, set a wait timer if required, and limit prod administrators.
 
 ## 6. Repository controls
