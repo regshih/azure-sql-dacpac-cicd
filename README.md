@@ -55,11 +55,11 @@ Replace every `YOUR_*`, all-zero GUID, and `replace1234` placeholder before use.
 * Production is manual and protected by the `prod` Environment.
 * Every deployment runs on the labeled private runner, rebuilds the selected commit, generates a report and SQL script, publishes with an Entra token, and uploads evidence even on failure.
 
-> Screenshot placeholder: GitHub Environments protection rules (`docs/images/github-environments.png`)
->
-> Screenshot placeholder: successful dev → test workflow promotion (`docs/images/workflow-promotion.png`)
->
-> Screenshot placeholder: Azure SQL networking blade with public access disabled (`docs/images/sql-networking.png`)
+### What to verify after setup
+
+* **GitHub Environments:** `test` and `prod` have the protection rules you chose (required reviewers for `prod`).
+* **Promotion:** a push to `main` deploys dev, and a successful dev run triggers test.
+* **Azure SQL networking:** public network access is disabled and there are no permanent firewall rules.
 
 ## Safety
 
